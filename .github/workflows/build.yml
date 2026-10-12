@@ -1,0 +1,94 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without the v prefix"
+        required: true
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.rev.outputs.version }}
+      tag: ${{ steps.rev.outputs.tag }}
+    steps:
+      - name: Resolve version from tag
+        id: rev
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -n "${INPUT_VERSION}" ]]; then
+            version="${INPUT_VERSION#v}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          if [[ -z "${version}" || "${version}" == "main" ]]; then
+            echo "A release tag or workflow_dispatch version is required" >&2
+            exit 1
+          fi
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${version}" >> "${GITHUB_OUTPUT}"
+
+  build:
+    needs: version
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64 }
+          - { goos: linux,   goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: darwin,  goarch: amd64 }
+          - { goos: freebsd, goarch: amd64 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+            go build -trimpath -ldflags="-s -w -X main.Version=${{ needs.version.outputs.version }}" \
+            -o grok2api${{ matrix.goos == 'windows' && '.exe' || '' }} .
+      - name: Package
+        shell: bash
+        run: |
+          bin="grok2api"
+          if [ "${{ matrix.goos }}" = "windows" ]; then bin="grok2api.exe"; fi
+          archive="grok2api-${{ needs.version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
+          tar czf "${archive}" "${bin}"
+          echo "archive=${archive}" >> "${GITHUB_OUTPUT}"
+        id: pack
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grok2api-${{ needs.version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ steps.pack.outputs.archive }}
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.tag }}
+          files: dist/*.tar.gz

@@ -1,0 +1,103 @@
+# ==================== 访问控制 ====================
+[app]
+# 管理后台密码
+app_key = "grok2api"
+# API 调用密钥（留空不鉴权，逗号分隔多个）
+api_key = ""
+# 对外访问的完整 origin（如 https://grok.example.com），仅用于管理后台 WebAuthn/来源校验。
+# 留空 = 按请求头自动推断（反向代理场景若推断不准再设置）
+public_origin = ""
+
+# ==================== 日志配置 ====================
+[logging]
+file_level = "INFO"
+max_files = 7
+
+# ==================== 应用功能 ====================
+[features]
+# 是否启用临时对话
+temporary = true
+# 是否启用会话记忆
+memory = false
+# 是否启用流式响应
+stream = true
+# 是否输出思考过程
+thinking = true
+# 聊天类 AUTO 模型在 auto 额度耗尽时，是否自动降级到 fast/expert
+auto_chat_mode_fallback = true
+# 全局附加指令
+custom_instruction = ""
+# 是否让同一账号的后续请求续接上一次上游会话。
+# 会话以账号为键，多个调用方共用账号池时会串上下文，默认关闭；
+# 仅在账号被单一调用方独占时才建议开启。
+conversation_continuation = false
+# 图片生成/编辑时是否向上游请求启用 NSFW（Imagine）
+enable_nsfw = true
+
+# ==================== 本地缓存 ====================
+[cache.local]
+# 图片缓存上限（MB），0 = 不限制
+image_max_mb = 0
+# 视频缓存上限（MB），0 = 不限制
+video_max_mb = 0
+
+# ==================== 代理配置 ====================
+[proxy.egress]
+# 代理 URL
+proxy_url = ""
+
+[proxy.clearance]
+# 手动模式：Cloudflare Cookie 字符串
+cf_cookies = ""
+# User-Agent（需与 cf_cookies 匹配）
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+statsig_seed = ""
+statsig_hex  = ""
+# 推荐：启用后自动从 grok.com HTML 种子 + 内置 SVG 路径表生成 HEX
+statsig_from_html = false
+# 以下为可选的固定值，一般留空即可（留空 = 自动生成/不附带）
+# 固定的 x-statsig-id 整值（设置后跳过动态生成）
+statsig_id = ""
+# 单独指定 cf_clearance（cf_cookies 中已含时可不填）
+cf_clearance = ""
+# 附加到 Cookie 的浏览器指纹字段（留空 = device_id 随机生成，其余不附带）
+device_id = ""
+x_anonuserid = ""
+x_challenge = ""
+x_signature = ""
+x_userid = ""
+
+# ==================== 重试策略 ====================
+[retry]
+# 触发重建代理 Session 的 HTTP 状态码
+reset_session_status_codes = [403]
+# 换账号重试最大次数（0 = 不重试）
+max_retries = 1
+# 触发换账号重试的 HTTP 状态码，英文逗号分隔
+on_codes = "429,401,503"
+
+# ==================== 账号刷新 ====================
+[account.refresh]
+# 总开关：true=配额刷新模式；false=随机选号模式
+enabled = true
+basic_interval_sec = 86400
+super_interval_sec = 7200
+heavy_interval_sec = 7200
+
+[account.selection]
+# 单号并发上限
+max_inflight = 8
+
+[account.local]
+# 账号存储文件路径（JSONL）。留空 = <DATA_DIR>/accounts.jsonl；环境变量 ACCOUNT_LOCAL_PATH 优先。
+# 仅启动时读取，不可通过管理后台修改。
+path = ""
+
+# ==================== 超时配置 ====================
+[asset]
+upload_timeout = 60
+list_timeout = 60
+delete_timeout = 60
+
+[nsfw]
+timeout = 60

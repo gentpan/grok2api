@@ -1,0 +1,41 @@
+# Keep the build context small and free of local state / secrets.
+# NOTE: config.defaults.toml and internal/api/web/* are embedded into the
+# binary (go:embed) and must stay in the context.
+
+# VCS / CI / tooling
+.git
+.gitignore
+.github
+.claude
+.superpowers
+.workbuddy
+.idea
+.vscode
+
+# Runtime data and local configuration
+data/
+logs/
+.env
+.env.*
+!.env.example
+config.toml
+
+# Build outputs
+grok2api
+grok2api.exe
+grok2api.exe~
+*.test
+*.out
+
+# Documentation and notes (not needed to build)
+*.md
+docs/
+reverse_task/
+
+# Helper scripts that are not part of the build
+capture_statsig_pair*.js
+fresh-req.json
+
+# Docker files themselves
+Dockerfile
+.dockerignore
