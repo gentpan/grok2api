@@ -19,8 +19,16 @@ permissions:
   contents: read
   packages: write
 
+# One image build at a time: the pruning step below must not run while another
+# build is still pushing its manifests.
+concurrency:
+  group: docker-image
+  cancel-in-progress: false
+
 env:
   GHCR_REPO: ghcr.io/${{ github.repository }}
+  # Image builds (tagged versions, each with its platform manifests) to keep.
+  KEEP_IMAGE_BUILDS: "5"
 
 jobs:
   docker:
@@ -76,3 +84,12 @@ jobs:
             ${{ env.GHCR_REPO }}:${{ steps.version.outputs.sha_short }}
           cache-from: type=gha,scope=${{ github.ref_name }}
           cache-to: type=gha,mode=max,scope=${{ github.ref_name }}
+
+      # Housekeeping: drop old image builds. A failure here must not turn a
+      # successful publish red, and the script itself aborts without deleting
+      # anything when it cannot read an index it needs to keep.
+      - name: Prune old images
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/prune_ghcr.py --keep "${KEEP_IMAGE_BUILDS}"

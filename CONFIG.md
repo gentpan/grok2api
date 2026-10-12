@@ -229,7 +229,7 @@ services:
       # - PROXY_HTTP=http://127.0.0.1:7890
 ```
 
-> 镜像由 GitHub Actions 构建并发布到 `ghcr.io/gentpan/grok2api`（`latest` 与提交短哈希标签），可匿名拉取。
+> 镜像由 GitHub Actions 构建并发布到 `ghcr.io/gentpan/grok2api`（`latest` 与提交短哈希标签），可匿名拉取。每次发布后会自动清理旧版本，只保留最近 5 次构建（见 `.github/workflows/build_docker.yml` 的 `KEEP_IMAGE_BUILDS`）。
 >
 > 容器以非 root 用户运行；挂载的 `data`、`logs` 目录会在启动时自动修正属主。
 
