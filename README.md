@@ -14,12 +14,14 @@ go build -o grok2api .
 ./grok2api            # 监听 0.0.0.0:8000
 ```
 
-或者用 Docker：
+或者用 Docker（支持 amd64 / arm64 / armv7）：
 
 ```bash
-docker build -t grok2api .
-docker run -d -p 8000:8000 -v $(pwd)/data:/app/data grok2api
+docker pull ghcr.io/gentpan/grok2api:latest
+docker run -d --name grok2api -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/gentpan/grok2api:latest
 ```
+
+也可以自己构建：`docker build -t grok2api .`
 
 ### 1. 添加账号
 

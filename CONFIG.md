@@ -206,16 +206,18 @@ timeout = 60                    # NSFW 设置超时（秒）
 ## Docker 部署
 
 ```bash
-docker build -t grok2api .
-docker run -d --name grok2api -p 8000:8000 -v $(pwd)/data:/app/data grok2api
+docker pull ghcr.io/gentpan/grok2api:latest
+docker run -d --name grok2api -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/gentpan/grok2api:latest
 ```
+
+自行构建：`docker build -t grok2api .`
 
 `docker compose` 示例：
 
 ```yaml
 services:
   grok2api:
-    build: .
+    image: ghcr.io/gentpan/grok2api:latest
     container_name: grok2api
     restart: unless-stopped
     ports:
@@ -227,7 +229,7 @@ services:
       # - PROXY_HTTP=http://127.0.0.1:7890
 ```
 
-> 仓库的 GitHub Actions 会把镜像构建并推送到 `ghcr.io/gentpan/grok2api`。GHCR 包默认是私有的，需要在 GitHub 的 Packages 设置里改为 public 后才能匿名拉取。
+> 镜像由 GitHub Actions 构建并发布到 `ghcr.io/gentpan/grok2api`（`latest` 与提交短哈希标签），可匿名拉取。
 >
 > 容器以非 root 用户运行；挂载的 `data`、`logs` 目录会在启动时自动修正属主。
 
